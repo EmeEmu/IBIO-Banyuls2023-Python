@@ -17,7 +17,10 @@ def h5tree_view(file):
                 d = deep + "└──"
             else:
                 d = deep + "├──"
-            print(d, f'🏷️{k} = `{atts[k].decode("utf-8")}`')
+            try:
+                print(d, f'🏷️{k} = `{atts[k].decode("utf-8")}`')
+            except (UnicodeDecodeError, AttributeError):
+                print(d, f'🏷️{k} = `{atts[k]}`')
             
     def view_h5object(obj, depth=0):
         name = obj.name.split("/")[-1]
