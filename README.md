@@ -19,3 +19,11 @@ You can also download indivual files by providing the unique identifier in the u
 !gdown 1jIQw8EEIoS516plFFXtRIwS-0oey7kFt
 ```
 and the file will be downloaded as `/content/fish1_different_directions.hdf5`
+
+## Working locally
+
+### Setting up the environnement
+
+```bash
+conda env create --file ibio_env.txt
+```
