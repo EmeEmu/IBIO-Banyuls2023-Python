@@ -25,5 +25,5 @@ and the file will be downloaded as `/content/fish1_different_directions.hdf5`
 ### Setting up the environnement
 
 ```bash
-conda env create --file ibio_env.txt
+conda env create --file ibio_env.txt --name ibio
 ```
