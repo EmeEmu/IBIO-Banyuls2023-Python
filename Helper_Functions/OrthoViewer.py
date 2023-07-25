@@ -116,10 +116,10 @@ class OrthoAxes:
                 STRING += f"set:{s} - neuron:{i}\n"
         return STRING
     
-    def scatter(self, XYZ, save_set=True, **kwargs):
-        self.ax_xy.scatter(XYZ[0],XYZ[1], **kwargs)
-        self.ax_yz.scatter(XYZ[2],XYZ[1], **kwargs)
-        self.ax_xz.scatter(XYZ[0],XYZ[2], **kwargs)
+    def scatter(self, XYZ, save_set=True, edgecolors='none', **kwargs):
+        self.ax_xy.scatter(XYZ[0],XYZ[1], edgecolors=edgecolors, **kwargs)
+        self.ax_yz.scatter(XYZ[2],XYZ[1], edgecolors=edgecolors, **kwargs)
+        self.ax_xz.scatter(XYZ[0],XYZ[2], edgecolors=edgecolors, **kwargs)
         if save_set and self._interactive:
             self._sets.append(XYZ)
 
