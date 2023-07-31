@@ -4,7 +4,7 @@ from matplotlib.gridspec import GridSpec
 
 
 class OrthoAxes:
-    def __init__(self, fig, coords, interactive=True, closest_threshold=1.e-2):
+    def __init__(self, fig, coords, interactive=True, closest_threshold=10):
 
         # Creating figure at the right size and ratios
         size = coords.ptp(axis=1)
