@@ -72,14 +72,17 @@ def plot_brain_layers(coords,mask,statistic,alpha_out=0.5,s=1,dpi=100):
         plt.show()
         
         
-def plot_brain_projections(coords,mask,statistic,alpha_out=0.1,c='blue',s=2,interactive=False,dpi=100):
+def plot_brain_projections(coords,statistic,mask=None,alpha_out=0.1,c='blue',s=2,interactive=False,dpi=100):
     alpha=statistic/np.max(statistic)
     alpha[alpha<0]=0
-    alpha=alpha[mask]
     fig=plt.figure(figsize=(6,6),dpi=dpi)
     ortho=OrthoAxes(fig,coords,interactive=interactive)
-    ortho.scatter(coords[:,~mask],c='lightgrey',alpha=alpha_out,s=s)
-    ortho.scatter(coords[:,mask],c=c,alpha=alpha,s=s)
+    if mask is None:
+        ortho.scatter(coords,c=c,alpha=alpha,s=s)
+    else:
+        alpha=alpha[mask]
+        ortho.scatter(coords[:,~mask],c='lightgrey',alpha=alpha_out,s=s)
+        ortho.scatter(coords[:,mask],c=c,alpha=alpha,s=s)
     plt.show()
     
     
@@ -182,7 +185,7 @@ def plot_neurons_per_label(coef_sign,indices_significant,statistic,regressors,co
             print('number of neurons: '+str(sizes[i]))
             if sizes[i]>0:
                 plt.close('all')
-                plot_brain_projections(coords,mask_coef,statistic)
+                plot_brain_projections(coords,statistic,mask_coef)
                 fig,ax=plt.subplots(dpi=dpi)
                 for n,regressor in enumerate(regressors):
                     ax.plot(times,scale(regressor),label='regressor '+str(n))
