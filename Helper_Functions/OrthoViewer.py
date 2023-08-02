@@ -117,11 +117,18 @@ class OrthoAxes:
         return STRING
     
     def scatter(self, XYZ, save_set=True, edgecolors='none', **kwargs):
-        self.ax_xy.scatter(XYZ[0],XYZ[1], edgecolors=edgecolors, **kwargs)
-        self.ax_yz.scatter(XYZ[2],XYZ[1], edgecolors=edgecolors, **kwargs)
-        self.ax_xz.scatter(XYZ[0],XYZ[2], edgecolors=edgecolors, **kwargs)
+        scatt_xy = self.ax_xy.scatter(XYZ[0],XYZ[1], edgecolors=edgecolors, **kwargs)
+        scatt_yz = self.ax_yz.scatter(XYZ[2],XYZ[1], edgecolors=edgecolors, **kwargs)
+        scatt_xz = self.ax_xz.scatter(XYZ[0],XYZ[2], edgecolors=edgecolors, **kwargs)
         if save_set and self._interactive:
             self._sets.append(XYZ)
+        return scatt_xy, scatt_yz, scatt_xz
+
+    @classmethod
+    def change_color(cls, scatt, color):
+        assert isinstance(scatt, tuple)
+        for s in scatt:
+            s.set_color(color)
 
     def plot_contour(self, contours, **kwargs):
         if isinstance(contours[0], np.ndarray):
