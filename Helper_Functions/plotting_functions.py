@@ -62,11 +62,11 @@ def plot_dff_raster(signal,times,indices,dff):
     extent=[times[0]-dt/2,times[-1]+dt/2,len(indices)-0.5,-0.5]
     cmap='inferno'
 
-    tax.imshow(signal.reshape(1,-1),cmap=cmap,interpolation='none',aspect='auto',extent=extent)
+    tax.imshow(signal.reshape(1,-1),cmap=cmap,aspect='auto',interpolation='none',extent=extent)
     tax.tick_params(axis='both',which='both',bottom=False,left=False,labelbottom=False,labelleft=False)
     tax.set_title('signal')
 
-    im=ax.imshow(dff[indices][:,:],cmap=cmap,interpolation='none',aspect='auto',extent=extent)
+    im=ax.imshow(dff[indices],cmap=cmap,interpolation='none',aspect='auto',extent=extent)
     cbar=plt.colorbar(im,cax=cax)
     cbar.set_label(r'$\Delta F/F$')
     ax.set_xlabel('time (s)')
