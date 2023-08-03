@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+from matplotlib.colors import is_color_like
 
 
 class OrthoAxes:
@@ -125,8 +126,15 @@ class OrthoAxes:
     @classmethod
     def change_color(cls, scatt, color):
         assert isinstance(scatt, tuple)
-        for s in scatt:
-            s.set_color(color)
+        if is_color_like(color):
+            for s in scatt:
+                s.set_color(color)
+        elif isinstance(color, np.ndarray):
+            assert color.ndim == 1, ":color: should be 1D."
+            for s in scatt:
+                s.set_array(color)
+        else:
+            raise TypeError("Unknown :color: type.")
 
     def plot_contour(self, contours, **kwargs):
         if isinstance(contours[0], np.ndarray):
