@@ -16,20 +16,18 @@ class OrthoAxes:
         else:
             wr = 1
             hr = H/W
-        gs = GridSpec(ncols=2, nrows=2, figure=fig, width_ratios=[wr, 1-wr], height_ratios=[hr, 1-hr])
-        subfig = fig.add_subfigure(gs[0,0])
 
         # creating sub-axes
         gs = GridSpec(
             2, 2, 
-            figure=subfig,
+            figure=fig,
             width_ratios=[size[0]/W, size[2]/W], 
             height_ratios=[size[1]/H, size[2]/H], 
             wspace=0, hspace=0
         )
-        self.ax_xy = subfig.add_subplot(gs[0], xticks=[], yticks=[])
-        self.ax_yz = subfig.add_subplot(gs[1], sharey=self.ax_xy, xticks=[], yticks=[])
-        self.ax_xz = subfig.add_subplot(gs[2], sharex=self.ax_xy, xticks=[], yticks=[])
+        self.ax_xy = fig.add_subplot(gs[0], xticks=[], yticks=[], aspect=hr, anchor="SE")
+        self.ax_yz = fig.add_subplot(gs[1], sharey=self.ax_xy, xticks=[], yticks=[], aspect=hr, anchor="SW")
+        self.ax_xz = fig.add_subplot(gs[2], sharex=self.ax_xy, xticks=[], yticks=[], aspect=hr, anchor="NE")
         self._axs = [self.ax_xy, self.ax_yz, self.ax_xz]
         pad = 0.05
         self.ax_xy.set_xlim(coords[0].min()-pad*size[0], coords[0].max()+pad*size[0])
@@ -41,7 +39,7 @@ class OrthoAxes:
         self._interactive = interactive
         if self._interactive:
             self.closest_threshold = closest_threshold
-            self._ax_text = subfig.add_subplot(gs[3], xticks=[], yticks=[])
+            self._ax_text = fig.add_subplot(gs[3], xticks=[], yticks=[])
             _ = self._ax_text.text(
                 0.5, 0.95, 
                 "Clic to \nmove Cursor", 
@@ -65,7 +63,7 @@ class OrthoAxes:
             for ax in self._axs:
                 self._h_lines.append(ax.axhline(color='k', lw=0.8, ls='--'))
                 self._v_lines.append(ax.axvline(color='k', lw=0.8, ls='--'))
-            subfig.canvas.mpl_connect('button_press_event', self._on_mouse_clic)
+            fig.canvas.mpl_connect('button_press_event', self._on_mouse_clic)
 
     def _on_mouse_clic(self, event):
         if self.ax_xy.get_navigate_mode() is None:
