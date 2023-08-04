@@ -175,7 +175,7 @@ def plot_brain_projections(coords,opacity,mask=None,alpha_out=0.1,c='blue',s=2,i
     """
     alpha=opacity/np.max(opacity)
     alpha[alpha<0]=0
-    fig=plt.figure(figsize=(6,6))
+    fig=plt.figure()
     ortho=OrthoAxes(fig,coords,interactive=interactive)
     if mask is None:
         ortho.scatter(coords,c=c,alpha=alpha,s=s)
@@ -225,7 +225,7 @@ def plot_brain_projections_colorbar(coords,color,mask,cmap='Blues',alpha_in=0.3,
         flag for interactive plotting
         default : False
     """
-    fig,ax=plt.subplots(figsize=(6,6))
+    fig,ax=plt.subplots()
     divider=make_axes_locatable(ax)
     ax2=divider.append_axes('right',size='40%',pad=0,sharey=ax)
     ax3=divider.append_axes('top',size='20%',pad=0,sharex=ax)
@@ -294,7 +294,7 @@ def plot_brain_projections_color(coords,color,mask=None,cmap='coolwarm',alpha_in
         flag for interactive plotting
         default : False
     """
-    fig=plt.figure(figsize=(6,6))
+    fig=plt.figure()
     ortho=OrthoAxes(fig,coords,interactive=interactive)
     if mask is None:
         ortho.scatter(coords,c=color,cmap=cmap,
