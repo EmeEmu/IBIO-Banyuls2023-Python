@@ -410,3 +410,148 @@ def plot_neurons_per_label(neuron_labels,indices,opacity,coords,regressors,dff,t
                 plt.show()
                 if interactive:
                     return ortho    
+
+
+class ComplexRaster:
+    def __init__(self, ax, X, 
+                 signal=None, times=None, order=None, weights=None,
+                 X_params={"cmap":"plasma", "vmin":None, "vmax":None},
+                 signal_params={"cmap":"plasma", "vmin":None, "vmax":None},
+                 weights_params={"cmap":"plasma", "vmin":None, "vmax":None},
+                ):
+        self.ax = ax
+        self.X = X
+        self.signal = signal
+        self.times = times
+        self.order = order
+        self.weights = weights
+
+        self._X_params = X_params
+        self._signal_params = signal_params
+        self._weights_params = weights_params
+
+        assert self.X.ndim==2
+        self._n, self._t  = self.X.shape        
+
+        divider = make_axes_locatable(ax)
+        if self.signal is not None:
+            assert self.signal.ndim==1
+            assert len(self.signal)==self._t
+            self._ax_sig = divider.append_axes('top',size=0.2,pad=0.1,sharex=ax)
+            self._ax_sig.tick_params(axis='both',which='both',bottom=False,left=False,labelbottom=False,labelleft=False)
+            
+        if self.weights is not None:
+            assert self.weights.ndim==1
+            assert len(self.weights)==self._n
+            self._ax_wei = divider.append_axes('left',size=0.2,pad=0.1,sharey=ax)
+            self._ax_wei.tick_params(axis='both',which='both',bottom=False,left=True,labelbottom=False,labelleft=True)
+            ax.tick_params(axis='both',which='both',bottom=True,left=False,labelbottom=True,labelleft=False)
+            self._ax_wei.set_ylabel("Neurons & Weight (re-ordered)")
+        else:
+            ax.set_ylabel("Neurons")
+            
+        if self.times is not None:
+            assert self.times.ndim==1
+            assert len(self.times)==self._t
+            ax.set_xlabel("Time (s)")
+        else:
+            self.times = np.arange(self.X.shape[1])
+            ax.set_xlabel("Time (frame)")
+        dt = np.mean(np.diff(self.times))
+        self._extent = [self.times[0]-dt/2,self.times[-1]+dt/2,self.X.shape[0]-0.5,-0.5]
+
+        if (self.weights is not None) and (self.order is None):
+            self.order = np.argsort(self.weights)[::-1]
+        if self.order is not None:
+            assert self.order.ndim==1
+            assert len(self.order)==self._n
+            self.X = self.X[self.order]
+            if self.weights is not None:
+                self.weights = self.weights[self.order]
+
+        
+        self._im_dff = self.ax.imshow(
+            self.X,
+            **self._X_params,
+            interpolation='none', aspect='auto', extent=self._extent)
+        if self.signal is not None:
+            self._im_sig = self._ax_sig.imshow(
+                self.signal.reshape(1,-1), 
+                cmap="plasma", vmin=-10, vmax=+10, 
+                aspect='auto', interpolation='none', extent=self._extent
+            )
+        if self.weights is not None:
+            self._im_wei = self._ax_wei.imshow(
+                self.weights.reshape(-1,1), 
+                cmap="seismic", vmin=-0.01, vmax=+0.01, 
+                aspect='auto', interpolation='none', extent=self._extent
+            )
+
+    @classmethod
+    def update_img(cls, ax_img, img):
+        """update the data of an matplotlib.image.AxesImage. """
+        ax_img.set_data(img)
+
+    def update_order(self, order):
+        self.update_img(self._im_dff, self.X[order])
+        if self.weights is not None:
+            self.update_img(self._im_wei, self.weights[order].reshape(-1,1))
+
+class PCA_raster(ComplexRaster):
+    def __init__(self, ax, X, pca, k=0, times=None):
+        self.pca = pca
+        self.k = k
+        self.x = X.T
+        self.Y = self.pca.transform(X)
+        super().__init__(
+            ax, 
+            self.x,
+            signal=self.Y[:,self.k], 
+            times=times,
+            weights=self.pca.components_[self.k],
+            X_params={"cmap":"plasma", "vmin":0, "vmax":1},
+            signal_params={"cmap":"plasma", "vmin":-10, "vmax":+10},
+            weights_params={"cmap":"plasma", "vmin":None, "vmax":None},
+        )
+
+    def change_component(self,k):
+        print(self.X.shape)
+        self.k = k
+        self.update_img(self._im_sig, self.Y[:,self.k].reshape(1,-1))
+        self.weights = self.pca.components_[self.k]
+        order = np.argsort(self.weights)[::-1]
+        self.update_img(self._im_wei, self.weights[order].reshape(-1,1))
+        self.update_img(self._im_dff, self.x[order])
+
+
+
+def plot_angle_colorbar(mappable, ax=None, label=""):
+    """Add a circular colorbar to a plot.
+    
+    :mappable: matplotlib.cm.ScalarMappable
+        see `plt.colorbar` or matplotlib.figure.Figure.colobar for more details
+    :ax: ~.axes.Axes
+        matplotlib parent axis
+    :label: str
+        label of the colorbar.
+    """
+    from matplotlib.projections.polar import PolarAxes
+    angles = mappable.get_array()
+    angles = np.unique(angles[np.isfinite(angles)])
+    
+    rad = np.linspace(0.9, 1.1, 2)
+    rg, tg = np.meshgrid(rad,angles)
+
+    ax = plt.gca()
+    divider = make_axes_locatable(ax)
+    _ax = divider.append_axes('right',size="20%",pad=0.5, axes_class=PolarAxes)
+    _ax.set_title(label)
+
+    vmin, vmax = mappable.get_clim()
+    _ax.pcolormesh(np.deg2rad(angles), rad, tg.T, cmap=mappable.get_cmap(), vmin=vmin, vmax=vmax)
+    t = np.rad2deg(_ax.get_xticks())
+    t[t > 180] -= 360
+    _ax.set_xticklabels([f"{int(tt)}°" for tt in t], fontdict={'fontweight':"bold"})
+    _ax.axes.get_yaxis().set_visible(False)
+    _ax.grid(False)
+    _ax.axes.spines['polar'].set_visible(False)
