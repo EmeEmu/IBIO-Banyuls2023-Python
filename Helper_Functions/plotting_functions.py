@@ -5,6 +5,8 @@ from ipywidgets import interact
 from sklearn.preprocessing import scale
 from Helper_Functions.OrthoViewer import OrthoAxes
 import itertools
+from scipy.stats import percentileofscore as inv_quantile
+import ipywidgets as widgets
 
 
 def plot_dff_traces(signal,times,indices,dff):
@@ -555,3 +557,124 @@ def plot_angle_colorbar(mappable, ax=None, label=""):
     _ax.axes.get_yaxis().set_visible(False)
     _ax.grid(False)
     _ax.axes.spines['polar'].set_visible(False)
+
+
+class JointPlot:
+    def __init__(self, ax, X, Y, tx=0, ty=0, **kwargs):
+        self.X = X
+        self.Y = Y
+        self._n = len(self.X)
+        self.ax_joint = ax
+        divider = make_axes_locatable(self.ax_joint)
+        self._ax_mx = divider.append_axes('top',size="20%",pad=0,sharex=self.ax_joint, ylabel="Density")
+        self._ax_my = divider.append_axes('right',size="20%",pad=0,sharey=self.ax_joint, xlabel="Density")
+        self._ax_my.tick_params(axis='both',which='both',bottom=True,left=False,labelbottom=True,labelleft=False)
+        self._ax_mx.tick_params(axis='both',which='both',bottom=False,left=True,labelbottom=False,labelleft=True)
+        
+        self._scatt = self.ax_joint.scatter(
+            self.X, 
+            self.Y, 
+            edgecolor="none", 
+            alpha=0.1*np.ones(self._n), 
+            c=np.zeros(self._n, dtype=np.int_), 
+            #cmap="flag_r", vmin=0, vmax=1,
+            **kwargs,
+            s=5,
+        )
+        _hx,_,_ = self._ax_mx.hist(self.X, bins=100, color="k", density=True);
+        _hy,_,_ = self._ax_my.hist(self.Y, bins=100, color="k", orientation="horizontal", density=True);
+
+        if tx is not None:
+            self._x, self._y = tx,ty
+            self._linex = self.ax_joint.axvline(self._x, color="red")
+            self._linemx = self._ax_mx.axvline(self._x, color="red")
+            self._liney = self.ax_joint.axhline(self._y, color="red")
+            self._linemy = self._ax_my.axhline(self._y, color="red")
+            self._textmx = self._ax_mx.text(self._x, _hx.max()+10, 
+                                            "50%", ha="center", va="bottom", 
+                                            color="red")
+            self._textmy = self._ax_my.text(_hy.max()+10, self._y, 
+                                            "50%", ha="left", va="center", 
+                                            rotation=-90, color="red")
+            self.change_thresh(self._x, self._y)
+
+    def change_thresh(self, tx=0, ty=0, sidex="t", sidey="t"):
+        maskX = (self.X > tx) if sidex=="t" else(self.X < tx)
+        maskY = (self.Y > ty) if sidey=="t" else(self.Y < ty)
+        mask = maskX.astype(np.uint8)+maskY.astype(np.uint8)*2
+        self._scatt.set_array(mask)
+        self._scatt.set_alpha(np.where(mask, 0.5, 0.1))
+        self._x, self._y = tx,ty
+        self._linex.set_xdata([self._x]) ; self._linemx.set_xdata([self._x])
+        self._liney.set_ydata([self._y]) ; self._linemy.set_ydata([self._y])
+        self._textmx.set_x(self._x) ; self._textmy.set_y(self._y)
+        self._textmx.set_text(f"{inv_quantile(self.X, self._x):0.1f}%")
+        self._textmy.set_text(f"{inv_quantile(self.Y, self._y):0.1f}%")
+        return mask
+
+def widgets_for_pca(n_componants=5):
+    v = []
+    for p in range(n_componants):
+        button = widgets.ToggleButton(value=False,description=f'PC{p}')
+        side = widgets.RadioButtons(options=['top', 'bottom'], layout={'width': 'max-content'})
+        slider = widgets.FloatSlider(
+            value=10,
+            min=0,
+            max=100,
+            step=1,
+            continuous_update=False,
+            #readout_format='.2f',
+        )
+        unit = widgets.Label(value="%")
+        h = widgets.HBox([button,side, slider, unit])
+        v.append(h)
+    return widgets.VBox(v)
+
+def params_from_widgets(widg):
+    n = len(widg.children)
+    ons = np.zeros(n, dtype=np.bool_)
+    side = np.zeros(n, dtype=str)
+    lims = np.zeros(n)
+    for p,c in zip(range(n), widg.children):
+        ons[p] = c.children[0].value
+        side[p] = c.children[1].value[0]
+        lims[p] = np.array(c.children[2].value)/100
+    return ons, side, lims
+
+def mask_from_quantile(distrib, q=0.01, side="t"):
+    assert distrib.ndim == 1, ":distrib: should be a 1D vector."
+    if side == "t":
+        q = 1-q
+    elif side == "b":
+        pass
+    else:
+        raise TypeError(f":side: should be 't' or 'b'. You gave {side}.")
+
+    thresh = np.quantile(distrib, q)
+
+    if side == "t":
+        mask = distrib > thresh
+    elif side == "b":
+        mask = distrib < thresh
+        
+    return mask
+
+def mask_from_widgets(pca, widg):
+    onoff, side, quant = params_from_widgets(widg)
+    
+    if (~onoff).all():
+        return np.zeros(pca.components_.shape[1], dtype=np.bool_)
+        
+    mask = np.ones(pca.components_.shape[1], dtype=np.bool_)
+    for p in range(len(onoff)):
+        if onoff[p]:
+            submask = mask_from_quantile(pca.components_[p], quant[p], side=side[p])
+            mask *= submask
+    return mask
+
+def recursive_observe(widg, func):
+    for c in widg.children:
+        if hasattr(c, "value"):
+            c.observe(func)
+        else:
+            recursive_observe(c, func)
