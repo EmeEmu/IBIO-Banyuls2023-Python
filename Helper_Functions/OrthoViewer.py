@@ -135,6 +135,12 @@ class OrthoAxes:
                 s.set_array(color)
         else:
             raise TypeError("Unknown :color: type.")
+    @classmethod
+    def change_alpha(cls, scatt, alpha):
+        assert isinstance(scatt, tuple)
+        for s in scatt:
+            s.set_alpha(alpha)
+            
 
     def plot_contour(self, contours, **kwargs):
         if isinstance(contours[0], np.ndarray):
