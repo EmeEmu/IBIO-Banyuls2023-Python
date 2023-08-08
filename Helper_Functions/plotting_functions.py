@@ -479,7 +479,7 @@ class ComplexRaster:
         if self.signal is not None:
             self._im_sig = self._ax_sig.imshow(
                 self.signal.reshape(1,-1), 
-                cmap="plasma", vmin=-10, vmax=+10, 
+                **self._signal_params, 
                 aspect='auto', interpolation='none', extent=self._extent
             )
         if self.weights is not None:
