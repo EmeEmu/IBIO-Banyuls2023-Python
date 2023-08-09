@@ -93,5 +93,5 @@ def fake_chirp(ts, N=30, tau=10):
     """
     Y = np.empty((N, len(ts)))
     for i in range(N):
-        Y[i] = fake_bump(ts, i*len(brain_time)/N/2, tau=tau)
+        Y[i] = fake_bump(ts, i*len(ts)/N/2, tau=tau)
     return Y
