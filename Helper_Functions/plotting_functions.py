@@ -448,7 +448,7 @@ class ComplexRaster:
             self._ax_wei = divider.append_axes('left',size=0.2,pad=0.1,sharey=ax)
             self._ax_wei.tick_params(axis='both',which='both',bottom=False,left=True,labelbottom=False,labelleft=True)
             ax.tick_params(axis='both',which='both',bottom=True,left=False,labelbottom=True,labelleft=False)
-            self._ax_wei.set_ylabel("Neurons & Weight (re-ordered)")
+            self._ax_wei.set_ylabel("Neurons & Coefficients (re-ordered)")
         else:
             ax.set_ylabel("Neurons")
             
@@ -503,16 +503,16 @@ class PCA_raster(ComplexRaster):
     def __init__(self, ax, X, pca, k=0, times=None):
         self.pca = pca
         self.k = k
-        self.x = X.T
-        self.Y = self.pca.transform(X)
+        self.x = X
+        self.Y = self.pca.transform(X.T)
         super().__init__(
             ax, 
             self.x,
             signal=self.Y[:,self.k], 
             times=times,
             weights=self.pca.components_[self.k],
-            X_params={"cmap":"plasma", "vmin":0, "vmax":1},
-            signal_params={"cmap":"plasma", "vmin":-10, "vmax":+10},
+            X_params={"cmap":"inferno", "vmin":0, "vmax":0.7},
+            signal_params={"cmap":"inferno", "vmin":-10, "vmax":+10},
             weights_params={"cmap":"plasma", "vmin":None, "vmax":None},
         )
 
