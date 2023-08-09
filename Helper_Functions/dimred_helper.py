@@ -66,7 +66,7 @@ def fake_bump(ts, t0, tau=10):
     i0 = np.argmin(np.abs(ts[:,np.newaxis] - t0), axis=0)
     y[i0] = 1
     if tau > 0:
-        dt = np.mean(np.diff(brain_time))
+        dt = np.mean(np.diff(ts))
         kernel_size=6
         n_points=int(kernel_size*tau/dt)
         kernel_times=np.linspace(-n_points*dt,n_points*dt,2*n_points+1)
